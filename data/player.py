@@ -30,20 +30,20 @@ class DumbPlayer(Player):
     def fire(self):
         grid = self._grid
         width, height = grid.dimensions()
-
-        valid_hit = False
-        while not valid_hit:
+        valid_shot = False
+        while not valid_shot:
             pos = (randint(0, width-1), randint(0, height-1))
             hit = grid.shoot(pos)
-            valid_hit = hit not in HITS
+            shot = hit.cell
+            valid_shot = shot not in HITS
             # if hit is valid
-            if hit in SHIPS:
+            if shot in SHIPS:
                 log("Hit a ship at " + str(pos))
-            elif hit == WATER:
+            elif shot == WATER:
                 log("Missed at " + str(pos))
-            if valid_hit:
+            if valid_shot:
                 self.shots.add(pos)
-        return hit
+        return shot
 
 
 class HuntingTargetingPlayer(Player):
