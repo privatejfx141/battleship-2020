@@ -3,21 +3,30 @@ from pygame.locals import *
 import sys
 
 pygame.init()
-pygame.font.init()
 WIDTH = 1280
 HEIGHT = 720
 clock = pygame.time.Clock()
 
 # fonts
+pygame.font.init()
 LABEL = pygame.font.Font('resources/fonts/purista.otf', 18)
 HEADER = pygame.font.Font('resources/fonts/purista.otf', 24)
 TITLE = pygame.font.Font('resources/fonts/purista.otf', 64)
 PARAGRAPH = pygame.font.Font('resources/fonts/purista.otf', 12)
 
+# sounds
+pygame.mixer.init()
+SOUNDS = {
+    "rollover": pygame.mixer.Sound("resources/sounds/buttonrollover.wav"),
+    "click": pygame.mixer.Sound("resources/sounds/buttonclick.wav")
+}
+
+
 # colours
 BLUE = (0, 51, 103)
 DARKBLUE = (0, 38, 76)
-GREY = (175, 175, 175)
+LIGHTBLUE = (0, 76, 154)
+GREY = (120, 120, 120)
 WHITE = (242, 242, 242)
 
 
@@ -66,6 +75,64 @@ def options():
     running = True
     while running:
         pass
+
+
+BUTTONS = []
+
+
+class IButton():
+    
+    def __init__(self, screen, text, rectangle):
+        self._counter = 0
+        self.screen = screen
+        self.rect = rectangle
+        self.fill = pygame.draw.rect(screen, BLUE, rectangle)
+        self.text = LABEL.render(text, True, WHITE)
+        self.label = screen.blit(self.text, self.text.get_rect(center=self.fill.center))
+        self.border = pygame.draw.rect(screen, GREY, rectangle, 1)
+        pygame.display.update(self.fill)
+        BUTTONS.append(self)
+
+    def draw(self):
+        screen = self.screen
+        self.fill = pygame.draw.rect(screen, BLUE, self.rect)
+        self.label = screen.blit(self.text, self.text.get_rect(center=self.fill.center))
+        self.border = pygame.draw.rect(screen, GREY, self.rect, 1)
+        pygame.display.update(self.fill)
+
+    def update_hover(self):
+        steps = 300
+        mouse_pos = pygame.mouse.get_pos()
+        collided = self.fill.collidepoint(mouse_pos)
+        if collided:
+            if self._counter < steps:
+                if self._counter == 0:
+                    SOUNDS["rollover"].play()
+                self._counter += 1
+            screen = self.screen
+            fill_color = [x + (((y-x)/steps)*self._counter) for x, y in zip(BLUE, LIGHTBLUE)]
+            border_color = [x + (((y-x)/steps)*self._counter) for x, y in zip(GREY, WHITE)]
+            self.fill = pygame.draw.rect(screen, fill_color, self.rect)
+            self.label = screen.blit(self.text, self.text.get_rect(center=self.fill.center))
+            self.border = pygame.draw.rect(screen, border_color, self.rect, 1)
+            pygame.display.update(self.fill)
+        else:
+            self._counter = 0
+            self.draw()
+        return collided
+
+
+class Button(IButton):
+
+    def __init__(self, screen, text, position):
+        x, y = position
+        IButton.__init__(self, screen, text, (x, y, 120, 32))
+
+class BigButton(IButton):
+
+    def __init__(self, screen, text, position):
+        x, y = position
+        IButton.__init__(self, screen, text, (x, y, 214, 48))
 
 
 def _add_button(screen, text, position, dimensions):
@@ -123,21 +190,22 @@ def draw_sidebar(screen):
     # orientation
     draw_text(screen, "Ship Orientation", HEADER, (678, 404))
     draw_text(screen, "Placement orientation of the current selected ship", PARAGRAPH, (678, 436))
-    add_button(screen, "Horizontal", (678, 460))
-    add_button(screen, "Vertical", (832, 460))
+
+    Button(screen, "Easy", (678, 573))
+    Button(screen, "Horizontal", (678, 460))
+    Button(screen, "Vertical", (832, 460))
 
     # difficulty
     draw_text(screen, "Enemy Difficulty", HEADER, (678, 517))
     draw_text(screen, "Difficulty of the opposing player", PARAGRAPH, (678, 549))
-    add_button(screen, "Easy", (678, 573))
-    add_button(screen, "Medium", (832, 573))
-    add_button(screen, "Hard", (986, 573))
+
+    Button(screen, "Medium", (832, 573))
+    Button(screen, "Hard", (986, 573))
 
     # bottom buttons
-    add_big_button(screen, "Begin Operation", (678, 648))
-    add_big_button(screen, "Reset Deployment", (922, 648))
+    BigButton(screen, "Begin Operation", (678, 648))
+    BigButton(screen, "Reset Deployment", (922, 648))
     
-    pygame.display.update()
 
 
 def game():
@@ -148,10 +216,16 @@ def game():
     pygame.display.update()
     running = True
     while running:
+
+        for button in BUTTONS:
+            button.update_hover()
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 exit()
+
+
 
 
 if __name__ == "__main__":
