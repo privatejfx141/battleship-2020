@@ -110,10 +110,13 @@ class IButton():
                     SOUNDS["rollover"].play()
                 self._counter += 1
             screen = self.screen
-            fill_color = [x + (((y-x)/steps)*self._counter) for x, y in zip(BLUE, LIGHTBLUE)]
-            border_color = [x + (((y-x)/steps)*self._counter) for x, y in zip(GREY, WHITE)]
+            fill_color = [x + (((y-x)/steps)*self._counter)
+                          for x, y in zip(BLUE, LIGHTBLUE)]
+            border_color = [x + (((y-x)/steps)*self._counter)
+                            for x, y in zip(GREY, WHITE)]
             self.fill = pygame.draw.rect(screen, fill_color, self.rect)
-            self.label = screen.blit(self.text, self.text.get_rect(center=self.fill.center))
+            self.label = screen.blit(
+                self.text, self.text.get_rect(center=self.fill.center))
             self.border = pygame.draw.rect(screen, border_color, self.rect, 1)
             pygame.display.update(self.fill)
         else:
@@ -208,6 +211,7 @@ def draw_sidebar(screen):
     
 
 
+
 def game():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     screen.fill(BLUE)
@@ -222,6 +226,7 @@ def game():
 
         for event in pygame.event.get():
             if event.type == QUIT:
+                running = False
                 pygame.quit()
                 exit()
 

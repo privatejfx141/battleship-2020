@@ -34,14 +34,10 @@ class OutOfBoundsException(Exception):
 class Ship(object):
 
     def __init__(self, shipid, name, length):
-        self._id = shipid
+        self.id = shipid
         self.name = name
         self.length = length
         self.positions = None
-
-    def get_id(self):
-        return self._id
-
 
 class HitResult(object):
     
@@ -57,8 +53,8 @@ class Grid(object):
         self._width = width
         self._height = height
         # empty dict means all water
-        self._cells = dict()
-        self._ships = list()
+        self.cells = dict()
+        self.ships = list()
 
     def dimensions(self):
         return self._width, self._height
@@ -80,31 +76,48 @@ class Grid(object):
             else:
                 x0 = x + i
             position = (x0, y0)
-            if self.valid_position(position) and position not in self._cells:
+            if self.valid_position(position) and position not in self.cells:
                 positions.append((x0, y0))
             else:
                 return []
         # place ship
         ship.positions = positions
         for position in positions:
-            self._cells[position] = ship.get_id()
-        self._ships.append(ship)
+            self.cells[position] = ship.id
+        self.ships.append(ship)
         return positions
+
+    def repair_ship(self, shipid):
+        """(Grid, int) -> [(int, int)]
+        Repairs a ship back to full health.
+        Returns a list of affected cells.
+        """
+        ship = None
+        for s in self.ships:
+            if s.id == shipid:
+                ship = s
+                break
+        changed = []
+        for pos in ship.positions:
+            if self.cells[pos] != shipid:
+                changed.append(pos)
+                self.cells[pos] = shipid
+        return changed
 
     def get_ship_status(self):
         ship_data = dict()
-        for ship in self._ships:
+        for ship in self.ships:
             cell_data = dict()
             for pos in ship.positions:
-                cell_data[pos] = self._cells[pos]
-            ship_data[ship.get_id()] = cell_data
+                cell_data[pos] = self.cells[pos]
+            ship_data[ship.id] = cell_data
         return ship_data
 
     def shoot(self, position):
         if not self.valid_position(position):
             msg = str(position) + " is not a valid position."
             raise OutOfBoundsException(msg)
-        cells = self._cells
+        cells = self.cells
         cell = None
         if position not in cells:
             cell = WATER
@@ -125,7 +138,7 @@ class Grid(object):
         return HitResult(position, cell, cells[position])
 
     def print(self):
-        cells = self._cells
+        cells = self.cells
         for y in range(self._height):
             row = ""
             for x in range(self._width):
@@ -183,4 +196,3 @@ if __name__ == "__main__":
     grid.shoot((6,2))
     grid.shoot((1,4))
     grid.print()
-    pprint(grid.get_ship_status())
